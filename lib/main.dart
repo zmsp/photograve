@@ -1,91 +1,122 @@
 import 'dart:convert' show json;
 
 import 'package:flutter/material.dart';
+import 'package:parallax_image/parallax_image.dart';
+import 'package:sizer/sizer.dart';
+
+final Color darkBlue = Color.fromARGB(255, 18, 32, 47);
 
 void main() {
   runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-      ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+    return Sizer(
+      builder: (context, orientation, deviceType) {
+        return MaterialApp(
+          theme: ThemeData.dark().copyWith(scaffoldBackgroundColor: darkBlue),
+          debugShowCheckedModeBanner: false,
+          home: Scaffold(
+            body: Center(
+              child: MyHomePage(),
+            ),
+          ),
+        );
+      },
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key? key, required this.title}) : super(key: key);
-  final String title;
-
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  var imageData;
 
   @override
   void initState() {
-    // TODO: implement initState
-
     super.initState();
+    WidgetsBinding.instance!.addPostFrameCallback((_) {
+      _loadData();
+    });
   }
 
-  void loadData() async {
+  void _loadData() async {
     String data =
         await DefaultAssetBundle.of(context).loadString("assets/data.json");
     final jsonResult = json.decode(data);
     print(jsonResult);
+    setState(() {
+      imageData = jsonResult["home"];
+    });
   }
 
   void _incrementCounter() {
     setState(() {
       _counter++;
     });
-    loadData();
+    _loadData();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
+    return ListView(
+      children: [
+        for (final imgurl in imageData)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10.0),
+            child: Container(
+              width: 20,
+              child: new GestureDetector(
+                onTap: () {
+                  print('Tapped $imgurl');
+                },
+                child: new ParallaxImage(
+                  extent: 500.0,
+                  image: new NetworkImage(
+                    imgurl,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        child: Text(
+                          "something just like this",
+                          style: TextStyle(color: Colors.white, fontSize: 16.0),
+                        ),
+                        decoration: BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black38,
+                              blurRadius:
+                                  20.0, // has the effect of softening the shadow
+                              spreadRadius:
+                                  20, // has the effect of extending the shadow
+                              // offset: Offset(
+                              //   10.0, // horizontal, move right 10
+                              //   10.0, // vertical, move down 10
+                              // ),
+                            )
+                          ],
+                        ),
+                      ),
+                      Text(
+                        '10-12-1921',
+                        style: TextStyle(color: Colors.white, fontSize: 10.0),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+          )
+      ],
     );
   }
 }
